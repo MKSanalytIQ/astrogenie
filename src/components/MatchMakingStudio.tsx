@@ -1,7 +1,22 @@
 import React, { useState } from 'react';
 import { MatchMakingResult } from '../types/astrology';
 import { SAMPLE_MATCH_RESULT } from '../data/defaultKundlis';
-import { HeartHandshake, ShieldCheck, AlertCircle, CheckCircle, RefreshCw, Sparkles, Heart } from 'lucide-react';
+import { AshtakootRadarChart } from './AshtakootRadarChart';
+import { calculateAshtakootMilan } from '../utils/ashtakootEngine';
+import { 
+  HeartHandshake, 
+  ShieldCheck, 
+  AlertCircle, 
+  CheckCircle, 
+  RefreshCw, 
+  Sparkles, 
+  Heart, 
+  Compass, 
+  Flame, 
+  Info, 
+  MessageSquare,
+  Award
+} from 'lucide-react';
 
 interface MatchMakingStudioProps {
   onAskAstrologerAboutMarriage: (topic: string) => void;
@@ -25,8 +40,8 @@ export const MatchMakingStudio: React.FC<MatchMakingStudioProps> = ({
   const [girlTob, setGirlTob] = useState('14:15');
   const [girlPob, setGirlPob] = useState('Mumbai, India');
 
-  const handleCalculateMatch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCalculateMatch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsCalculating(true);
 
     try {
@@ -40,13 +55,62 @@ export const MatchMakingStudio: React.FC<MatchMakingStudioProps> = ({
       });
 
       const data = await res.json();
-      if (data?.match) {
+      if (data?.match && Array.isArray(data.match.scores) && data.match.scores.length === 8) {
         setMatchResult(data.match);
+      } else {
+        // High fidelity deterministic engine fallback
+        const calculated = calculateAshtakootMilan(
+          boyName, boyDob, boyTob, boyPob,
+          girlName, girlDob, girlTob, girlPob
+        );
+        setMatchResult(calculated);
       }
     } catch (err) {
-      console.error('Error matching Kundlis:', err);
+      console.warn('Network call fallback to local Ashtakoot engine:', err);
+      const calculated = calculateAshtakootMilan(
+        boyName, boyDob, boyTob, boyPob,
+        girlName, girlDob, girlTob, girlPob
+      );
+      setMatchResult(calculated);
     } finally {
       setIsCalculating(false);
+    }
+  };
+
+  const loadPreset = (presetType: 'uttama' | 'auspicious' | 'dosha') => {
+    if (presetType === 'uttama') {
+      setBoyName('Arjun Kapoor');
+      setBoyDob('1994-06-21');
+      setBoyTob('08:15');
+      setBoyPob('Varanasi, India');
+      setGirlName('Ananya Iyer');
+      setGirlDob('1996-09-12');
+      setGirlTob('11:45');
+      setGirlPob('Chennai, India');
+      const res = calculateAshtakootMilan('Arjun Kapoor', '1994-06-21', '08:15', 'Varanasi', 'Ananya Iyer', '1996-09-12', '11:45', 'Chennai');
+      setMatchResult(res);
+    } else if (presetType === 'auspicious') {
+      setBoyName('Vikram Malhotra');
+      setBoyDob('1992-11-05');
+      setBoyTob('16:20');
+      setBoyPob('Bengaluru, India');
+      setGirlName('Sneha Joshi');
+      setGirlDob('1995-02-18');
+      setGirlTob('09:10');
+      setGirlPob('Pune, India');
+      const res = calculateAshtakootMilan('Vikram Malhotra', '1992-11-05', '16:20', 'Bengaluru', 'Sneha Joshi', '1995-02-18', '09:10', 'Pune');
+      setMatchResult(res);
+    } else {
+      setBoyName('Rohan Mehra');
+      setBoyDob('1993-03-10');
+      setBoyTob('22:45');
+      setBoyPob('Jaipur, India');
+      setGirlName('Kavita Rao');
+      setGirlDob('1993-03-11');
+      setGirlTob('04:15');
+      setGirlPob('Hyderabad, India');
+      const res = calculateAshtakootMilan('Rohan Mehra', '1993-03-10', '22:45', 'Jaipur', 'Kavita Rao', '1993-03-11', '04:15', 'Hyderabad');
+      setMatchResult(res);
     }
   };
 
@@ -58,44 +122,74 @@ export const MatchMakingStudio: React.FC<MatchMakingStudioProps> = ({
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto">
+      
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-stone-900 via-rose-950/30 to-stone-900 border border-rose-500/25 p-6 shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-stone-900 via-rose-950/40 to-[#1A0E1C] border-2 border-rose-500/30 p-6 sm:p-8 shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="font-serif text-2xl md:text-3xl font-extrabold text-stone-100 tracking-tight flex items-center gap-2">
-                <span>Vedic Kundli Milan (36 Guna Matching)</span>
-                <Heart className="w-5 h-5 text-rose-400 fill-rose-400" />
-              </h1>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold uppercase tracking-wider mb-2">
+              <Heart className="w-3.5 h-3.5 fill-rose-400 text-rose-400" />
+              <span>Brihat Parashara Ashtakoot Compatibility Engine</span>
             </div>
-            <p className="mt-1 text-xs text-stone-300 max-w-2xl leading-relaxed">
-              Classical Ashtakoot Gun Milan evaluating biological, emotional, mental, and genetic marital longevity. Minimum 18/36 points required for auspicious union.
+            <h1 className="font-serif text-2xl md:text-3xl font-extrabold text-stone-100 tracking-tight flex items-center gap-2">
+              <span>Kundli Milan & 36 Guna Score</span>
+              <span className="text-xl">💍</span>
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
+              Classical 8-fold astrological analysis evaluating spiritual ego, psychological friendship, biological warmth, and genetic longevity. Visualized via interactive multi-axis D3.js radar geometry.
             </p>
           </div>
 
-          <div className="bg-stone-950/80 border border-rose-500/30 px-5 py-3 rounded-2xl flex items-center gap-4">
+          {/* Compatibility Score Counter Badge */}
+          <div className="bg-stone-950/90 border-2 border-amber-500/40 px-6 py-4 rounded-3xl flex items-center gap-5 shadow-xl">
             <div className="text-right">
-              <div className="text-[10px] uppercase font-bold text-rose-400 tracking-wider">
-                Total Ashtakoot Score
+              <div className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">
+                Ashtakoot Score
               </div>
-              <div className="text-2xl font-black text-stone-100">
-                {matchResult.totalScore} <span className="text-sm font-normal text-stone-400">/ 36 Gunas</span>
+              <div className="text-3xl font-black text-stone-100 font-mono">
+                {matchResult.totalScore} <span className="text-sm font-normal text-stone-400">/ 36</span>
               </div>
             </div>
-            <div className="h-10 w-[1px] bg-stone-800" />
-            <span className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
-              matchResult.totalScore >= 24
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                : matchResult.totalScore >= 18
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-            }`}>
-              {matchResult.compatibilityLevel}
-            </span>
+            <div className="h-12 w-[1px] bg-stone-800" />
+            <div className="space-y-1">
+              <span className={`inline-block px-3 py-1 rounded-xl text-xs font-bold ${
+                matchResult.totalScore >= 24
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : matchResult.totalScore >= 18
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+              }`}>
+                {matchResult.compatibilityLevel}
+              </span>
+              <div className="text-[10px] text-stone-400 font-mono">Min 18 Required</div>
+            </div>
           </div>
+        </div>
+
+        {/* Quick Couple Presets for Testing */}
+        <div className="mt-6 pt-4 border-t border-stone-800/80 flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-[10px] uppercase font-bold text-stone-400">Explore Sample Pairings:</span>
+          <button
+            onClick={() => loadPreset('uttama')}
+            className="px-3 py-1 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-200 border border-stone-700 hover:border-amber-400 transition"
+          >
+            🌟 Uttama Match (30+ Gunas)
+          </button>
+          <button
+            onClick={() => loadPreset('auspicious')}
+            className="px-3 py-1 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-200 border border-stone-700 hover:border-amber-400 transition"
+          >
+            💍 Auspicious Match (24-29 Gunas)
+          </button>
+          <button
+            onClick={() => loadPreset('dosha')}
+            className="px-3 py-1 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-200 border border-stone-700 hover:border-rose-400 transition"
+          >
+            ⚠️ Dosha Test (Nadi Conflict)
+          </button>
         </div>
       </div>
 
@@ -104,10 +198,10 @@ export const MatchMakingStudio: React.FC<MatchMakingStudioProps> = ({
         <div className="flex items-center justify-between border-b border-stone-800 pb-3">
           <h2 className="font-serif text-md font-bold text-stone-100 flex items-center gap-2">
             <HeartHandshake className="w-4 h-4 text-amber-400" />
-            <span>Enter Bride & Groom Birth Data for Matchmaking</span>
+            <span>Enter Groom & Bride Birth Particulars (वर एवं कन्या जन्म विवरण)</span>
           </h2>
           <span className="text-xs text-stone-400">
-            Calculates Lagna, Moon Nakshatra & Mangal Dosha
+            Calculates exact Moon sign, Janam Nakshatra & Gunas
           </span>
         </div>
 
@@ -115,8 +209,14 @@ export const MatchMakingStudio: React.FC<MatchMakingStudioProps> = ({
           
           {/* Groom (Boy) Column */}
           <div className="space-y-4 p-5 rounded-2xl bg-stone-950 border border-amber-500/20">
-            <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
-              <span>🤵 Groom (Var) Details</span>
+            <div className="flex items-center justify-between text-amber-300 font-bold text-sm">
+              <span className="flex items-center gap-1.5">
+                <span>🤵</span>
+                <span>Groom (वर) Details</span>
+              </span>
+              <span className="text-[11px] font-normal text-stone-400 font-mono">
+                {matchResult.boyMoonSign} • {matchResult.boyNakshatra}
+              </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -164,8 +264,14 @@ export const MatchMakingStudio: React.FC<MatchMakingStudioProps> = ({
 
           {/* Bride (Girl) Column */}
           <div className="space-y-4 p-5 rounded-2xl bg-stone-950 border border-rose-500/20">
-            <div className="flex items-center gap-2 text-rose-300 font-bold text-sm">
-              <span>👰 Bride (Kanya) Details</span>
+            <div className="flex items-center justify-between text-rose-300 font-bold text-sm">
+              <span className="flex items-center gap-1.5">
+                <span>👰</span>
+                <span>Bride (कन्या) Details</span>
+              </span>
+              <span className="text-[11px] font-normal text-stone-400 font-mono">
+                {matchResult.girlMoonSign} • {matchResult.girlNakshatra}
+              </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -213,7 +319,7 @@ export const MatchMakingStudio: React.FC<MatchMakingStudioProps> = ({
 
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-3">
           <button
             type="submit"
             disabled={isCalculating}
@@ -222,73 +328,121 @@ export const MatchMakingStudio: React.FC<MatchMakingStudioProps> = ({
             {isCalculating ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Matching 36 Gunas...</span>
+                <span>Aligning 36 Gunas...</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                <span>Calculate Gun Milan (36 Points)</span>
+                <span>Calculate Gun Milan & Render Radar</span>
               </>
             )}
           </button>
         </div>
       </form>
 
-      {/* Critical Marriage Dosha Checks */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* CORE FEATURE: D3.js Radar Chart Visualization & Astrological Verdict */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Manglik Compatibility */}
-        <div className="bg-stone-900/90 rounded-3xl border border-stone-800 p-5 shadow-xl space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase font-bold text-amber-400 tracking-wider">
-              Kuja (Manglik) Check
-            </span>
-            <span className="flex items-center gap-1 text-xs font-bold text-emerald-400">
-              <CheckCircle className="w-3.5 h-3.5" /> Favorable
-            </span>
-          </div>
-          <h3 className="font-serif text-md font-bold text-stone-100">
-            Manglik Compatibility
-          </h3>
-          <p className="text-xs text-stone-300 leading-relaxed">
-            {matchResult.manglikCompatibility.verdict}
-          </p>
+        {/* Left: D3.js Ashtakoot Radar Chart (7 cols) */}
+        <div className="lg:col-span-7">
+          <AshtakootRadarChart
+            scores={matchResult.scores}
+            totalScore={matchResult.totalScore}
+            compatibilityLevel={matchResult.compatibilityLevel}
+          />
         </div>
 
-        {/* Nadi Dosha */}
-        <div className="bg-stone-900/90 rounded-3xl border border-stone-800 p-5 shadow-xl space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase font-bold text-amber-400 tracking-wider">
-              Nadi (Genetic Health)
-            </span>
-            <span className="flex items-center gap-1 text-xs font-bold text-emerald-400">
-              <CheckCircle className="w-3.5 h-3.5" /> 8/8 Points
-            </span>
+        {/* Right: Critical Marriage Dosha Checks & Counselor Summary (5 cols) */}
+        <div className="lg:col-span-5 space-y-5">
+          
+          {/* Manglik Compatibility Card */}
+          <div className="bg-stone-900/90 rounded-3xl border border-stone-800 p-5 shadow-xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">
+                Kuja (Manglik) Check
+              </span>
+              <span className="flex items-center gap-1 text-xs font-bold text-emerald-400">
+                <CheckCircle className="w-3.5 h-3.5" /> Favorable
+              </span>
+            </div>
+            <h3 className="font-serif text-sm font-bold text-stone-100">
+              Manglik Compatibility
+            </h3>
+            <p className="text-xs text-stone-300 leading-relaxed">
+              {matchResult.manglikCompatibility.verdict}
+            </p>
           </div>
-          <h3 className="font-serif text-md font-bold text-stone-100">
-            Nadi Koota Harmony
-          </h3>
-          <p className="text-xs text-stone-300 leading-relaxed">
-            {matchResult.nadiDosha.advice}
-          </p>
-        </div>
 
-        {/* Bhakoot Dosha */}
-        <div className="bg-stone-900/90 rounded-3xl border border-stone-800 p-5 shadow-xl space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase font-bold text-amber-400 tracking-wider">
-              Bhakoot (Family Fortune)
-            </span>
-            <span className="flex items-center gap-1 text-xs font-bold text-emerald-400">
-              <CheckCircle className="w-3.5 h-3.5" /> 7/7 Points
-            </span>
+          {/* Nadi Dosha Card */}
+          <div className={`p-5 rounded-3xl border shadow-xl space-y-2 ${
+            matchResult.nadiDosha.hasNadiDosha 
+              ? 'bg-rose-950/20 border-rose-500/40 text-stone-200' 
+              : 'bg-stone-900/90 border-stone-800 text-stone-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">
+                Nadi (Genetic Health)
+              </span>
+              <span className={`flex items-center gap-1 text-xs font-bold ${
+                matchResult.nadiDosha.hasNadiDosha ? 'text-rose-400' : 'text-emerald-400'
+              }`}>
+                {matchResult.nadiDosha.hasNadiDosha ? <AlertCircle className="w-3.5 h-3.5" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                {matchResult.nadiDosha.hasNadiDosha ? 'Nadi Dosha Detected' : '8/8 Max Points'}
+              </span>
+            </div>
+            <h3 className="font-serif text-sm font-bold text-stone-100">
+              Nadi Koota Harmony
+            </h3>
+            <p className="text-xs text-stone-300 leading-relaxed">
+              {matchResult.nadiDosha.advice}
+            </p>
           </div>
-          <h3 className="font-serif text-md font-bold text-stone-100">
-            Bhakoot Auspiciousness
-          </h3>
-          <p className="text-xs text-stone-300 leading-relaxed">
-            {matchResult.bhakootDosha.advice}
-          </p>
+
+          {/* Bhakoot Dosha Card */}
+          <div className={`p-5 rounded-3xl border shadow-xl space-y-2 ${
+            matchResult.bhakootDosha.hasBhakootDosha 
+              ? 'bg-amber-950/20 border-amber-500/40 text-stone-200' 
+              : 'bg-stone-900/90 border-stone-800 text-stone-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">
+                Bhakoot (Family Fortune)
+              </span>
+              <span className={`flex items-center gap-1 text-xs font-bold ${
+                matchResult.bhakootDosha.hasBhakootDosha ? 'text-amber-400' : 'text-emerald-400'
+              }`}>
+                {matchResult.bhakootDosha.hasBhakootDosha ? <AlertCircle className="w-3.5 h-3.5" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                {matchResult.bhakootDosha.hasBhakootDosha ? 'Bhakoot Dosha Detected' : '7/7 Max Points'}
+              </span>
+            </div>
+            <h3 className="font-serif text-sm font-bold text-stone-100">
+              Bhakoot Auspiciousness
+            </h3>
+            <p className="text-xs text-stone-300 leading-relaxed">
+              {matchResult.bhakootDosha.advice}
+            </p>
+          </div>
+
+          {/* Ask Astrologer Action Box */}
+          <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-500/10 via-stone-900 to-stone-950 border border-amber-500/30 space-y-3">
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-amber-400" />
+              <h4 className="font-serif text-xs font-bold text-stone-100">
+                Seek Deeper Marriage Guidance?
+              </h4>
+            </div>
+            <p className="text-[11px] text-stone-300 leading-relaxed">
+              Acharya AstroGenie can analyze Navamsha (D9) chart overlays, 7th house lord strength, and Jupiter transit blessing windows for this couple.
+            </p>
+            <button
+              onClick={() => onAskAstrologerAboutMarriage(`Acharya ji, please analyze the ${matchResult.totalScore}/36 Kundli Milan compatibility between ${boyName} and ${girlName}, and suggest marital harmony remedies.`)}
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold text-xs shadow-md transition flex items-center justify-center gap-2"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Discuss Compatibility with Acharya</span>
+            </button>
+          </div>
+
         </div>
 
       </div>
@@ -302,7 +456,7 @@ export const MatchMakingStudio: React.FC<MatchMakingStudioProps> = ({
               <span>Ashtakoot 8-Fold Guna Milan Breakdown</span>
             </h2>
             <p className="text-xs text-stone-400">
-              Complete point allocation according to classical Brihat Parashara Hora Shastra.
+              Point allocation according to classical Brihat Parashara Hora Shastra.
             </p>
           </div>
         </div>
@@ -321,10 +475,10 @@ export const MatchMakingStudio: React.FC<MatchMakingStudioProps> = ({
                   {s.obtainedPoints} / {s.maximumPoints}
                 </span>
               </div>
-              <div className="text-[10px] text-amber-400/90 font-medium">
+              <div className="text-[11px] text-amber-400 font-medium">
                 {s.area}
               </div>
-              <p className="text-xs text-stone-400 leading-relaxed">
+              <p className="text-[11px] text-stone-400 leading-relaxed">
                 {s.explanation}
               </p>
             </div>
@@ -332,39 +486,6 @@ export const MatchMakingStudio: React.FC<MatchMakingStudioProps> = ({
         </div>
       </div>
 
-      {/* Counselor Summary & Wedding Rituals */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 bg-stone-900/90 rounded-3xl border border-amber-500/25 p-6 shadow-xl space-y-3">
-          <h3 className="font-serif text-md font-bold text-stone-100 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>Astrological Counselor Verdict</span>
-          </h3>
-          <p className="text-xs text-stone-300 leading-relaxed whitespace-pre-line">
-            {matchResult.counselorSummary}
-          </p>
-
-          <button
-            onClick={() => onAskAstrologerAboutMarriage(`Explain the matrimonial compatibility between ${boyName} and ${girlName} in detail.`)}
-            className="mt-2 text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1.5"
-          >
-            <span>Ask Acharya for Pre-Marital Guidance & Auspicious Dates →</span>
-          </button>
-        </div>
-
-        <div className="lg:col-span-4 bg-stone-900/90 rounded-3xl border border-stone-800 p-6 shadow-xl space-y-3">
-          <h3 className="font-serif text-md font-bold text-stone-100">
-            Recommended Harmonizing Rituals
-          </h3>
-          <ul className="space-y-2 text-xs text-stone-300">
-            {matchResult.recommendedRituals.map((r, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span className="text-amber-400 font-bold">🕉️</span>
-                <span>{r}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
     </div>
   );
 };
