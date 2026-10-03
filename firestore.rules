@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'email']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.email is string && data.email.size() <= 256;
+    }
+
+    function isValidKundli(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'birthDetails', 'ascendant', 'moonSign']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId == userId;
+    }
+
+    function isValidConsultation(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'sender', 'text', 'timestamp']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId == userId &&
+             data.text is string && data.text.size() <= 8192;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow delete: if false;
+
+      // Kundlis subcollection
+      match /kundlis/{kundliId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidKundli(request.resource.data, userId);
+        allow delete: if isOwner(userId);
+      }
+
+      // Consultations subcollection
+      match /consultations/{messageId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidConsultation(request.resource.data, userId);
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

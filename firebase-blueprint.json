@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Authenticated user profile and astrologer account preferences",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "photoURL": { "type": "string", "maxLength": 512 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "birthDetails": { "type": "object" },
+        "activeKundliId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "email"]
+    },
+    "Kundli": {
+      "title": "Kundli",
+      "description": "Calculated Vedic birth horoscope for the user or family member",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "birthDetails": { "type": "object" },
+        "ascendant": { "type": "object" },
+        "moonSign": { "type": "object" },
+        "sunSign": { "type": "object" },
+        "currentDasha": { "type": "object" },
+        "houses": { "type": "array" },
+        "planets": { "type": "array" },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "birthDetails", "ascendant", "moonSign"]
+    },
+    "ConsultationMessage": {
+      "title": "ConsultationMessage",
+      "description": "Astrologer chat exchange between native and AstroGenie",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "kundliId": { "type": "string", "maxLength": 128 },
+        "sender": { "type": "string", "maxLength": 32 },
+        "text": { "type": "string", "maxLength": 8192 },
+        "category": { "type": "string", "maxLength": 64 },
+        "timestamp": { "type": "string", "maxLength": 64 },
+        "suggestedUpay": { "type": "object" }
+      },
+      "required": ["id", "userId", "sender", "text", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Stores user profile and account details"
+    },
+    "/users/{userId}/kundlis/{kundliId}": {
+      "schema": "Kundli",
+      "description": "Stores calculated birth charts owned by the authenticated user"
+    },
+    "/users/{userId}/consultations/{messageId}": {
+      "schema": "ConsultationMessage",
+      "description": "Stores ongoing astrology consultations between user and AstroGenie agent"
+    }
+  }
+}
