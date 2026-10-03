@@ -6,8 +6,8 @@ import { Sparkles, Calendar, HeartHandshake, BookOpen, Crown, UserPlus, ShieldCh
 import { User } from 'firebase/auth';
 
 interface HeaderProps {
-  activeTab: 'chat' | 'kundli' | 'matching' | 'prashna' | 'horoscope' | 'remedies' | 'store';
-  setActiveTab: (tab: 'chat' | 'kundli' | 'matching' | 'prashna' | 'horoscope' | 'remedies' | 'store') => void;
+  activeTab: 'chat' | 'kundli' | 'matching' | 'prashna' | 'transits' | 'horoscope' | 'remedies' | 'store';
+  setActiveTab: (tab: 'chat' | 'kundli' | 'matching' | 'prashna' | 'transits' | 'horoscope' | 'remedies' | 'store') => void;
   activeKundli: VedicKundli;
   allKundlis: VedicKundli[];
   onSelectKundli: (kundli: VedicKundli) => void;
@@ -116,6 +116,19 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Compass className="w-3.5 h-3.5" />
               <span>{t.prashnaKundli}</span>
+            </button>
+
+            {/* Sade Sati & Transits Tab */}
+            <button
+              onClick={() => setActiveTab('transits')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+                activeTab === 'transits'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow-md shadow-amber-500/20 font-bold'
+                  : 'text-stone-300 hover:text-amber-300 hover:bg-stone-800/60'
+              }`}
+            >
+              <span className="text-sm">🪐</span>
+              <span>{t.sadeSati || 'Sade Sati & Transits'}</span>
             </button>
 
             <button
@@ -310,6 +323,14 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             {t.prashnaKundli}
+          </button>
+          <button
+            onClick={() => setActiveTab('transits')}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-lg ${
+              activeTab === 'transits' ? 'bg-amber-500 text-stone-950 font-bold' : 'text-stone-300 bg-stone-900/60'
+            }`}
+          >
+            🪐 {t.sadeSati || 'Sade Sati'}
           </button>
           <button
             onClick={() => setActiveTab('horoscope')}

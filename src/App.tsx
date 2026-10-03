@@ -12,6 +12,7 @@ import { MatchMakingStudio } from './components/MatchMakingStudio';
 import { PrashnaKundliStudio } from './components/PrashnaKundliStudio';
 import { HoroscopeAndMuhurat } from './components/HoroscopeAndMuhurat';
 import { RemediesVault } from './components/RemediesVault';
+import { SadeSatiAndTransitStudio } from './components/SadeSatiAndTransitStudio';
 import { AddonServicesStore } from './components/AddonServicesStore';
 import { MembershipPlansModal } from './components/MembershipPlansModal';
 import { BirthDetailsModal } from './components/BirthDetailsModal';
@@ -71,7 +72,7 @@ export default function App() {
   const activeKundli = kundlis.find((k) => k.id === activeKundliId) || kundlis[0] || SAMPLE_KUNDLIS[0];
 
   // Active Navigation Tab
-  const [activeTab, setActiveTab] = useState<'chat' | 'kundli' | 'matching' | 'prashna' | 'horoscope' | 'remedies' | 'store'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'kundli' | 'matching' | 'prashna' | 'transits' | 'horoscope' | 'remedies' | 'store'>('chat');
 
   // Consultation Chat History (with localStorage persistence)
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
@@ -492,6 +493,14 @@ export default function App() {
 
         {activeTab === 'prashna' && (
           <PrashnaKundliStudio />
+        )}
+
+        {activeTab === 'transits' && (
+          <SadeSatiAndTransitStudio
+            kundli={activeKundli}
+            onAskAstrologerAboutTransit={handleAskAboutTopic}
+            onStartVoiceCall={() => setIsVoiceCallOpen(true)}
+          />
         )}
 
         {activeTab === 'horoscope' && (
